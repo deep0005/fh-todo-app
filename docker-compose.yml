@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend/TodoApp
+      dockerfile: Dockerfile
+    container_name: todoapp-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Data Source=/app/data/todoapp.db
+      - Jwt__Key=SuperSecretKeyThatIsAtLeast32CharsLong!
+      - Jwt__Issuer=TodoApp
+      - Jwt__Audience=TodoApp
+      - Jwt__ExpiryHours=24
+    volumes:
+      - todoapp-data:/app/data
+    command: sh -c "mkdir -p /app/data && dotnet TodoApp.Api.dll"
+
+  frontend:
+    build:
+      context: ./frontend/todo-web-app
+      dockerfile: Dockerfile
+    container_name: todoapp-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  todoapp-data:
