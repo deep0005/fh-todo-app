@@ -5,6 +5,9 @@ import QuickAddTask from '../components/tasks/QuickAddTask'
 import TaskFiltersBar from '../components/tasks/TaskFilters'
 import TaskList from '../components/tasks/TaskList'
 import Navbar from '../components/layout/Navbar'
+import TaskSummary from '../components/tasks/TaskSummary'
+import { authStore } from '../store/authStore'
+
 
 const TasksPage = () => {
   const [filters, setFilters] = useState<TaskFilters>({})
@@ -14,7 +17,13 @@ const TasksPage = () => {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <div className="max-w-3xl mx-auto px-4 py-8 flex flex-col gap-6">
-        
+
+        {/* Summary */}
+        <TaskSummary
+          tasks={tasks}
+          username={authStore.getUsername() || 'there'}
+        />
+
         {/* Quick Add */}
         <QuickAddTask />
 

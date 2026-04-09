@@ -9,7 +9,9 @@ using TaskStatus = TodoApp.Api.Models.Enums.TaskStatus;
 
 namespace TodoApp.Api.Services;
 
-public class TaskService(AppDbContext context) : ITaskService
+public class TaskService(
+    AppDbContext context,
+    ILogger<TaskService> logger) : ITaskService
 {
     public async Task<IEnumerable<TaskResponseDto>> GetAllAsync(
         int userId,
@@ -17,17 +19,19 @@ public class TaskService(AppDbContext context) : ITaskService
         TaskPriority? priority,
         string? sortBy)
     {
+        logger.LogInformation(
+            "Fetching tasks for userId: {UserId}, status: {Status}, priority: {Priority}, sortBy: {SortBy}",
+            userId, status, priority, sortBy);
+
         var query = context.Tasks
             .Where(t => t.UserId == userId);
 
-        // Filtering
         if (status.HasValue)
             query = query.Where(t => t.Status == status.Value);
 
         if (priority.HasValue)
             query = query.Where(t => t.Priority == priority.Value);
 
-        // Sorting
         query = sortBy?.ToLower() switch
         {
             "duedate_asc" => query.OrderBy(t => t.DueDate),
@@ -37,13 +41,19 @@ public class TaskService(AppDbContext context) : ITaskService
             _ => query.OrderByDescending(t => t.CreatedAt)
         };
 
-        return await query
+        var tasks = await query
             .Select(t => MapToDto(t))
             .ToListAsync();
+
+        logger.LogInformation("Returned {Count} tasks for userId: {UserId}", tasks.Count(), userId);
+
+        return tasks;
     }
 
     public async Task<TaskResponseDto> GetByIdAsync(int id, int userId)
     {
+        logger.LogInformation("Fetching task {TaskId} for userId: {UserId}", id, userId);
+
         var task = await context.Tasks
             .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId)
             ?? throw new NotFoundException($"Task with id {id} not found.");
@@ -53,6 +63,8 @@ public class TaskService(AppDbContext context) : ITaskService
 
     public async Task<TaskResponseDto> CreateAsync(CreateTaskDto dto, int userId)
     {
+        logger.LogInformation("Creating task for userId: {UserId}, title: {Title}", userId, dto.Title);
+
         var task = new TaskItem
         {
             Title = dto.Title,
@@ -68,11 +80,15 @@ public class TaskService(AppDbContext context) : ITaskService
         context.Tasks.Add(task);
         await context.SaveChangesAsync();
 
+        logger.LogInformation("Task created successfully with id: {TaskId} for userId: {UserId}", task.Id, userId);
+
         return MapToDto(task);
     }
 
     public async Task<TaskResponseDto> UpdateAsync(int id, UpdateTaskDto dto, int userId)
     {
+        logger.LogInformation("Updating task {TaskId} for userId: {UserId}", id, userId);
+
         var task = await context.Tasks
             .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId)
             ?? throw new NotFoundException($"Task with id {id} not found.");
@@ -86,11 +102,15 @@ public class TaskService(AppDbContext context) : ITaskService
 
         await context.SaveChangesAsync();
 
+        logger.LogInformation("Task {TaskId} updated successfully for userId: {UserId}", id, userId);
+
         return MapToDto(task);
     }
 
     public async Task DeleteAsync(int id, int userId)
     {
+        logger.LogInformation("Deleting task {TaskId} for userId: {UserId}", id, userId);
+
         var task = await context.Tasks
             .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId)
             ?? throw new NotFoundException($"Task with id {id} not found.");
@@ -99,6 +119,8 @@ public class TaskService(AppDbContext context) : ITaskService
         task.UpdatedAt = DateTime.UtcNow;
 
         await context.SaveChangesAsync();
+
+        logger.LogInformation("Task {TaskId} soft deleted successfully for userId: {UserId}", id, userId);
     }
 
     private static TaskResponseDto MapToDto(TaskItem task) => new()

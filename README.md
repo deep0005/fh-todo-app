@@ -64,6 +64,14 @@ npm run dev
 
 ---
 
+### Run Tests
+```bash
+cd backend/TodoApp/TodoApp.Api.Tests
+dotnet test
+```
+
+---
+
 ## Project Structure
 
 ```
@@ -80,7 +88,10 @@ fh-todo-app/
 │       ├── Data/
 │       ├── Middleware/
 │       ├── Helpers/
-│       └── Migrations/
+│       ├── Migrations/
+│       └── TodoApp.Api.Tests/
+│           ├── Helpers/
+│           └── Services/
 │
 ├── frontend/
 │   └── todo-web-app/
@@ -128,6 +139,16 @@ Single Axios instance handles JWT attachment on every request and global 401 han
 
 ---
 
+## Trade-offs & Assumptions
+
+- **SQLite over a full SQL database** — portable and zero-config, suitable for this scope
+- **Integer IDs over UUIDs** — simpler for a single-instance app
+- **JWT stored in localStorage** — simpler than httpOnly cookies, acceptable for this scope
+- **No refresh tokens** — 24 hour expiry is reasonable, refresh tokens would be added in production
+- **Single project backend** — Clean Architecture multi-project structure would be over-engineered for this scope
+
+---
+
 ## API Endpoints
 
 ### Auth
@@ -170,17 +191,17 @@ Single Axios instance handles JWT attachment on every request and global 401 han
 - Custom delete confirmation modal
 - Auto-redirect on session expiry
 - Single command Docker deployment
+- 15 unit tests covering Auth and Task services
+- Structured logging across all services
 
 ---
 
 ## What I Would Add With More Time
 
-- Unit and integration tests
 - Pagination for large task lists
 - Task search
 - Refresh token rotation
 - Rate limiting on auth endpoints
-- Structured logging
 - CI/CD pipeline
 - Switch SQLite to a dedicated SQL database for production
 - Secrets management for production credentials

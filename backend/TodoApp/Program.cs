@@ -11,6 +11,11 @@ using TodoApp.Api.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Logging
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.SetMinimumLevel(LogLevel.Information);
+
 // DB
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration

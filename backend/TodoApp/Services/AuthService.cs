@@ -10,13 +10,20 @@ using TodoApp.Api.Services.Interfaces;
 
 namespace TodoApp.Api.Services;
 
-public class AuthService(AppDbContext context, IConfiguration configuration) : IAuthService
+public class AuthService(
+    AppDbContext context,
+    IConfiguration configuration,
+    ILogger<AuthService> logger) : IAuthService
 {
     public async Task<AuthResponseDto> RegisterAsync(RegisterRequestDto request)
     {
-        // Check if username already exists
+        logger.LogInformation("Register attempt for username: {Username}", request.Username);
+
         if (await context.Users.AnyAsync(u => u.Username == request.Username))
+        {
+            logger.LogWarning("Registration failed — username already exists: {Username}", request.Username);
             throw new InvalidOperationException("Username already exists.");
+        }
 
         var user = new User
         {
@@ -28,17 +35,24 @@ public class AuthService(AppDbContext context, IConfiguration configuration) : I
         context.Users.Add(user);
         await context.SaveChangesAsync();
 
+        logger.LogInformation("User registered successfully: {Username}", request.Username);
         return GenerateToken(user);
     }
 
     public async Task<AuthResponseDto> LoginAsync(LoginRequestDto request)
     {
+        logger.LogInformation("Login attempt for username: {Username}", request.Username);
+
         var user = await context.Users
             .FirstOrDefaultAsync(u => u.Username == request.Username);
 
         if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        {
+            logger.LogWarning("Login failed — invalid credentials for username: {Username}", request.Username);
             throw new UnauthorizedAccessException("Invalid username or password.");
+        }
 
+        logger.LogInformation("Login successful for username: {Username}", request.Username);
         return GenerateToken(user);
     }
 
@@ -71,9 +85,10 @@ public class AuthService(AppDbContext context, IConfiguration configuration) : I
             ExpiresAt = expiry
         };
     }
-    
+
     public async Task<bool> IsUsernameAvailableAsync(string username)
     {
+        logger.LogInformation("Username availability check for: {Username}", username);
         return !await context.Users.AnyAsync(u => u.Username == username);
     }
 }
