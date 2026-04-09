@@ -156,11 +156,11 @@ const TaskCard = ({ task }: TaskCardProps) => {
     }
 
     return (
+    <>
         <div className={`bg-white rounded-xl border shadow-sm p-4 flex flex-col gap-2 
-      ${task.status === TaskStatus.Completed ? 'opacity-60' : 'border-gray-200'}`}>
+          ${task.status === TaskStatus.Completed ? 'opacity-60' : 'border-gray-200'}`}>
             <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-3">
-                    {/* Complete checkbox */}
                     <input
                         type="checkbox"
                         checked={task.status === TaskStatus.Completed}
@@ -169,7 +169,7 @@ const TaskCard = ({ task }: TaskCardProps) => {
                         disabled={task.status === TaskStatus.Completed}
                     />
                     <span className={`text-sm font-medium text-gray-900 
-            ${task.status === TaskStatus.Completed ? 'line-through text-gray-400' : ''}`}>
+                        ${task.status === TaskStatus.Completed ? 'line-through text-gray-400' : ''}`}>
                         {task.title}
                     </span>
                 </div>
@@ -204,16 +204,19 @@ const TaskCard = ({ task }: TaskCardProps) => {
                     </button>
                 </div>
             </div>
-            {showDeleteModal && (
-                <ConfirmModal
-                    title="Delete Task"
-                    message={`Are you sure you want to delete "${task.title}"? This cannot be undone.`}
-                    onConfirm={handleDelete}
-                    onCancel={() => setShowDeleteModal(false)}
-                />
-            )}
         </div>
-    )
+
+        {/* Modal outside opacity wrapper */}
+        {showDeleteModal && (
+            <ConfirmModal
+                title="Delete Task"
+                message={`Are you sure you want to delete "${task.title}"? This cannot be undone.`}
+                onConfirm={handleDelete}
+                onCancel={() => setShowDeleteModal(false)}
+            />
+        )}
+    </>
+)
 }
 
 export default TaskCard
